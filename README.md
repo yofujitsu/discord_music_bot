@@ -4,6 +4,7 @@
 ### Commands list
 ![image](https://github.com/yofujitsu/discord_music_bot/assets/78373273/e592c2dc-3a3f-4d13-878b-bdcbbd8cc3d4)
 ## Features
+![image](https://github.com/yofujitsu/discord_music_bot/assets/78373273/461d4d25-8a32-4b40-a88f-8247ac95d72c)
 - playing music via links
 - 320 kbps mp3
 - queues for playlists
