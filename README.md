@@ -16,9 +16,9 @@
 - Replace `"YOUR_FFMPEG.MP3_PATH"` with your real ffmpeg.exe path in bot.py
 - Install **Python 3.12.1** and Libraries via pip:
   ```
-  pip install `discord` (to link with discord)
-  pip install `discord.py[voice]` (to have ability for joining voice chat)
-  pip install `yt_dlp` (for downloading the tracks)
+  pip install discord (to link with discord)
+  pip install discord.py[voice] (to have ability for joining voice chat)
+  pip install yt_dlp (for downloading the tracks)
   ```
 ### Also you can set your custom bot status, intents and activity in this string of code:
 ```
