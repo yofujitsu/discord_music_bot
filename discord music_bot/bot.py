@@ -7,6 +7,8 @@ import queue
 from server import keep_alive
 from asyncio import Lock
 from discord.ext import commands, tasks
+from discord import app_commands
+from discord import Interaction
 from config import TOKEN
 
 intents = discord.Intents.all()
@@ -53,18 +55,19 @@ async def check_domains(link):
 
 @bot.event
 async def on_ready():
+    await bot.tree.sync()
     print("bot is online!")
 
-async def play_next(ctx, curr_queue):
+async def play_next(ctx: Interaction, curr_queue: queue):
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     
     if not curr_queue.empty():
         next_source = curr_queue.get()
         await play_source(ctx, voice, next_source, curr_queue)
     else:
-        await ctx.send('Очередь пуста. Воспроизведение завершено.')
+        await ctx.response.send_message('Очередь пуста. Воспроизведение завершено.')
 
-async def play_source(ctx, voice, source, curr_queue):
+async def play_source(ctx: Interaction, voice: None, source: None, curr_queue: queue):
     ydl_opts = {
         'format': 'bestaudio/best',
         'ffmpeg_location': os.path.realpath(f'{os.getcwd()}\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe'), 
@@ -87,11 +90,11 @@ async def play_source(ctx, voice, source, curr_queue):
     voice.play(discord.FFmpegPCMAudio(executable=f'{os.getcwd()}\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe', source=f'{os.getcwd()}\\music\\song.mp3'), after=lambda e: bot.loop.create_task(play_next(ctx, curr_queue)))
 
         
-@bot.command(name='play')
-async def play(ctx, *, command = None):
+@bot.tree.command(name='play', description='Проигрывает музыку по ссылке')
+async def play(ctx: Interaction, *, command: str = None):
     """Проигрывает музыку по ссылке"""
     global server, server_id, channel_name
-    author = ctx.author
+    author = ctx.author if hasattr(ctx, 'author') else ctx.user
     if command == None:
         server = ctx.guild
         channel_name = author.voice.channel_name
@@ -148,7 +151,7 @@ async def play(ctx, *, command = None):
             # Добавляем трек в очередь
             curr_queue.put(sourse)
 
-            await ctx.send(f'Tрек добавлен в очередь. В очереди сейчас {curr_queue.qsize()} треков.')
+            await ctx.response.send_message(f'Tрек добавлен в очередь. В очереди сейчас {curr_queue.qsize()} треков.')
 
             # Если бот не воспроизводит ничего, запускаем воспроизведение
             if not voice.is_playing():
@@ -157,53 +160,57 @@ async def play(ctx, *, command = None):
     else:
         voice.play(discord.FFmpegPCMAudio(executable=f'{os.getcwd()}\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe', source=f'{os.getcwd()}\\music\\{sourse}'))
     
-@bot.command(name='skip')
-async def skip(ctx):
+@bot.tree.command(name='skip', description='Позволяет пропустить текущий трек из очереди')
+async def skip(ctx: Interaction):
     """Позволяет пропустить текущий трек из очереди"""
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
 
     if voice and voice.is_playing():
-        await ctx.send('Текущий трек пропущен.')
+        await ctx.response.send_message('Текущий трек пропущен.')
         voice.stop()
     else:
-        await ctx.send('Нет активного воспроизведения.')
+        await ctx.response.send_message('Нет активного воспроизведения.')
     
     
-@bot.command(name='leave')
-async def leave(ctx):
+@bot.tree.command(name='leave', description='Заставляет бота выйти из войса')
+async def leave(ctx: Interaction):
     """Заставляет бота выйти из войса"""
     global server, channel_name
     voice = discord.utils.get(bot.voice_clients, guild=server)
     if voice.is_connected():
         await voice.disconnect()
+        await ctx.response.send_message(f'{ctx.user.mention}, бот отключен.')
     else:
-        await ctx.channel.send(f'{ctx.author.mention}, бот отключен.')
+        await ctx.response.send_message(f'{ctx.user.mention}, бот отключен.')
         
-@bot.command(name='pause')
-async def pause(ctx):
+@bot.tree.command(name='pause', description='Останавливает музыку')
+async def pause(ctx: Interaction):
     """Останавливает музыку"""
     voice = discord.utils.get(bot.voice_clients, guild=server)
     if voice.is_playing():
         voice.pause()
+        await ctx.response.send_message(f'{ctx.user.mention}, трек приостановлен.')
     else:
-        await ctx.channel.send(f'{ctx.author.mention}, трек приостановлен.')
+        await ctx.response.send_message(f'{ctx.user.mention}, трек приостановлен.')
     
-@bot.command(name='resume')
-async def resume(ctx):
+@bot.tree.command(name='resume', description='Воспроизводит музыку')
+async def resume(ctx: Interaction):
     """Воспроизводит музыку"""
     voice = discord.utils.get(bot.voice_clients, guild=server)
     if voice.is_paused():
         voice.resume()
+        await ctx.response.send_message(f'{ctx.user.mention}, трек играет дальше.')
     else:
-        await ctx.channel.send(f'{ctx.author.mention}, трек играет дальше.')
+        await ctx.response.send_message(f'{ctx.user.mention}, трек играет дальше.')
                            
-@bot.command(name='stop')
-async def stop(ctx):
+@bot.tree.command(name='stop', description='Останавливает текущее проигрывание трека')
+async def stop(ctx: Interaction):
     """Останавливает текущее проигрывание трека"""
     voice = discord.utils.get(bot.voice_clients, guild=server)
-    voice.stop()    
+    voice.stop()
+    await ctx.response.send_message(f'{ctx.user.mention}, проигрывание остановлено.')    
         
         
     
-keep_alive()
+# keep_alive()
 bot.run(TOKEN)
