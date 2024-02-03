@@ -4,6 +4,7 @@ import discord
 import shutil
 import queue
 
+from server import keep_alive
 from asyncio import Lock
 from discord.ext import commands, tasks
 from config import TOKEN
@@ -24,7 +25,14 @@ def move_file(source_path, destination_directory):
         print(f'Произошла ошибка при перемещении файла: {e}')
 
 
-bot = commands.Bot(command_prefix="/", intents=intents, activity=activity, status=discord.Status.idle)
+ffmpeg_options = {
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+    'options': '-vn',
+    'executable': f'{os.getcwd()}\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe',  
+    'probe_path': f'{os.getcwd()}\\ffmpeg-master-latest-win64-gpl\\bin\\ffprobe.exe',  
+}
+
+bot = commands.Bot(command_prefix="/", intents=intents, activity=activity, status=discord.Status.idle, ffmpeg_options=ffmpeg_options)
 
 server, server_id, channel_name = None, None, None
 
@@ -59,7 +67,7 @@ async def play_next(ctx, curr_queue):
 async def play_source(ctx, voice, source, curr_queue):
     ydl_opts = {
         'format': 'bestaudio/best',
-        'ffmpeg_location': os.path.realpath('YOUR_FFMPEG.EXE_PATH'), 
+        'ffmpeg_location': os.path.realpath(f'{os.getcwd()}\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe'), 
         'postprocessors': [
             {
                 'key': 'FFmpegExtractAudio',
@@ -76,7 +84,7 @@ async def play_source(ctx, voice, source, curr_queue):
             os.rename(file, 'song.mp3')
             move_file('song.mp3', f'{os.getcwd()}\\music\\')
 
-    voice.play(discord.FFmpegPCMAudio(executable='YOUR_FFMPEG.EXE_PATH', source=f'{os.getcwd()}\\music\\song.mp3'), after=lambda e: bot.loop.create_task(play_next(ctx, curr_queue)))
+    voice.play(discord.FFmpegPCMAudio(executable=f'{os.getcwd()}\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe', source=f'{os.getcwd()}\\music\\song.mp3'), after=lambda e: bot.loop.create_task(play_next(ctx, curr_queue)))
 
         
 @bot.command(name='play')
@@ -147,7 +155,7 @@ async def play(ctx, *, command = None):
                 await play_next(ctx, curr_queue)
         
     else:
-        voice.play(discord.FFmpegPCMAudio(executable='YOUR_FFMPEG.EXE_PATH', source=f'{os.getcwd()}\\music\\{sourse}'))
+        voice.play(discord.FFmpegPCMAudio(executable=f'{os.getcwd()}\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe', source=f'{os.getcwd()}\\music\\{sourse}'))
     
 @bot.command(name='skip')
 async def skip(ctx):
@@ -197,5 +205,5 @@ async def stop(ctx):
         
         
     
-
+keep_alive()
 bot.run(TOKEN)
