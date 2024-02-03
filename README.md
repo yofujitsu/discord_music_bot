@@ -20,6 +20,7 @@
   pip install discord (to link with discord)
   pip install discord.py[voice] (to have ability for joining voice chat)
   pip install yt_dlp (for downloading the tracks)
+  pip install flask (for web-server)
   ```
 - Add "music" folder in project (there will be your mp3's)
 ![image](https://github.com/yofujitsu/discord_music_bot/assets/78373273/dbf31937-8fb5-44a0-948d-22c83a25aa43)
